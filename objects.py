@@ -30,7 +30,6 @@ class Object:
             self.game.draw(self.x, self.y, self.w, self.h, color=self.color)
 
 
-
 class Ball(Object):
 
     def __init__(self, game, x, y):
@@ -39,14 +38,10 @@ class Ball(Object):
         self.speedy = 12 /2
 
     def update(self):
-        # print(self.x, self.y, self.speedx, self.speedy)
-        
         prev_pos = self.x, self.y
         self.x += self.speedx * self.game.delta
         self.y += self.speedy * self.game.delta
 
-        # self.speedy -= 100 * game.delta
-        
         collision = None
         for obj in self.game.objects:
             if isinstance(obj, (Wall, Brick, Paddle, Death)):  #Wall, paddle, death
@@ -56,7 +51,7 @@ class Ball(Object):
                     break
         self.color = (0.3, 0.3, 0.3)
         if collision:
-            obj.on_collision(self)
+            obj.on_collision(self) # what is this doing?
             collx, colly, collside = collision
             if collside == 'top' or collside == 'btm':
                 self.speedy *= -1
@@ -102,19 +97,44 @@ class Paddle(Object):
 
     def __init__(self, game, x, y):
         super().__init__(game, x, y, w=2.5, h=0.7)
-        self.speed = 10
-    
-    def on_collision(self, obj):
-        pass
+        self.speedx = 10
+        self.speedy = 10
 
     def update(self):
+        self.speedx = 0
+        self.speedy = 0
+        prev_pos = self.x, self.y
+
         wall = next(obj for obj in self.game.objects if isinstance(obj, Wall))
 
         if (self.game.pressed('a') or self.game.pressed('j')):
-            self.x -= self.speed * self.game.delta
+            self.speedx = -10
+            self.speedy = 10
+            self.x += self.speedx * self.game.delta
+
         if self.game.pressed('d') or self.game.pressed('l'):
-            self.x += self.speed * self.game.delta
-        if self.x > self.game.grid[0] - self.w - wall.w:
-            self.x = self.game.grid[0] - self.w - wall.w
-        if self.x < wall.w:
-            self.x = 0 + wall.w
+            self.speedx = 10
+            self.speedy = 10
+            self.x += self.speedx * self.game.delta
+
+
+        # if self.x > self.game.grid[0] - self.w - wall.w:
+        #     self.x = self.game.grid[0] - self.w - wall.w
+        # if self.x < wall.w:
+        #     self.x = 0 + wall.w
+        collision = None
+        for obj in self.game.objects:
+            if isinstance(obj, (Wall)):  #Wall, paddle, death
+                collision = physics.collision(self, obj)
+                if collision:
+                    break
+        
+        if collision:
+            obj.on_collision(self)
+            collx, colly, collside = collision
+            # if collside == 'top' or collside == 'btm':
+            #     self.speedy *= -1
+            if collside == 'lft': 
+                self.x = collx
+            if collside == 'rgt':
+                self.x = collx
