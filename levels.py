@@ -4,19 +4,21 @@ LEVEL = """
 #ooooooooooooooooooo#
 #ooooooooooooooooooo#
 #                   #
+#                   #
+#                   #
 #  b                #
 #         p         #
 #^^^^^^^^^^^^^^^^^^^#
-#####################
+#####s###############
 """
 
 WALLS = """
 #########
 ###### ##
-#   #  ##
+#   # o##
 ##  b   #
 #       #
-## p  # #
+##  p   #
 #########
 """
 
@@ -28,7 +30,7 @@ SECRET_LEVEL = """
 #oooooooooooo########
 #    oooo           #
 #    ####   b       #
-#         p        #
+#         p         #
 #    ^^^^^^^^^^^    #
 #    ###########    #
 #ooooooooooooooooooo#
