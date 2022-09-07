@@ -6,9 +6,9 @@ import levels
 import objects
 TEXTURES = pathlib.Path(__file__).parent / 'textures'
 
-lvl = levels.LEVEL[1:-1].split('\n')[::-1]
+lvl = levels.WALLS[1:-1].split('\n')[::-1]
 grid = len(lvl[0]), len(lvl)
-game = npgame.Game(grid, scale=50, fps=60)
+game = npgame.Game(grid, scale=50, fps=.5)#60)
 game.title('Br-Br-Br-Br-Br-Beakout!!!!!!!')
 game.grid = grid 
 
@@ -19,6 +19,7 @@ while on:
     game.score = 0
     game.lives = 20
     game.bricks = 0
+
 
     for y, row in enumerate(lvl):
         for x, char in enumerate(row):
@@ -35,12 +36,15 @@ while on:
                 game.objects.append(objects.Death(game, x, y))
             if char == 's':
                 game.objects.append(objects.Scoreboard(game, x, y))
-
+            if (x, y) == (7, 0):  # TODO
+                game.thewall = game.objects[-1]
 
 
     while game.running:
+        print('------------------')
         game.update()
-        game.delta = .01  # 0.01  # TODO
+        # game.delta = .04  # 0.01  # TODO
+        game.delta = 0.3
         if game.pressed('escape'):
             game.running = False
             on = False
