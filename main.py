@@ -6,9 +6,9 @@ import levels
 import objects
 TEXTURES = pathlib.Path(__file__).parent / 'textures'
 
-lvl = levels.WALLS[1:-1].split('\n')[::-1]
+lvl = levels.LEVEL[1:-1].split('\n')[::-1]
 grid = len(lvl[0]), len(lvl)
-game = npgame.Game(grid, scale=50, fps=.5)#60)
+game = npgame.Game(grid, scale=50, fps=60)#60)
 game.title('Br-Br-Br-Br-Br-Beakout!!!!!!!')
 game.grid = grid 
 
@@ -41,10 +41,9 @@ while on:
 
 
     while game.running:
-        print('------------------')
+        # print('------------------')
         game.update()
-        # game.delta = .04  # 0.01  # TODO
-        game.delta = 0.3
+        # game.delta = 0.3
         if game.pressed('escape'):
             game.running = False
             on = False

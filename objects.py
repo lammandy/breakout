@@ -96,62 +96,69 @@ class Ball(Object):
         self.shadow2[0] -= self.game.delta
         self.shadow3[0] -= self.game.delta
 
-        print('BEFORE MOVING', physics.intersects(self, self.game.thewall))
+        # print('BEFORE MOVING', physics.intersects(self, self.game.thewall))
 
         speed = np.sqrt(self.speedx ** 2 + self.speedy ** 2)
         if speed > 5:
             self.speedx = self.speedx / (speed / 5)
             self.speedy = self.speedy / (speed / 5)
 
-        self.shadow2 = [0.0001, self.x, self.y]
-        self.shadow3 = [0.0001, self.x + self.speedx * self.game.delta, self.y + self.speedy * self.game.delta]
+        self.shadow2 = [0.0001, self.x, self.y] # grey
+        self.shadow3 = [0.0001, self.x + self.speedx * self.game.delta, self.y + self.speedy * self.game.delta] # green
 
-        collision = None
-        dist = None
-        for obj in self.game.objects:
-            if isinstance(obj, (Wall, Brick, Paddle, Death)):
-                current = physics.collision(self, obj, self.game.delta)
-                if not current:
-                    continue
-                # current = list(current)
-                new_dist = np.sqrt((obj.x + obj.w/2 - self.x - self.w/2) ** 2 + (obj.y + obj.h/2 - self.y - self.h/2) ** 2)
-                moved = np.sqrt((current[0] - self.x) ** 2 + (current[1] - self.y) ** 2)
-                total = np.sqrt(self.speedx ** 2 + self.speedy ** 2)
-                time_moved = self.game.delta * moved / total
-                current += (time_moved, obj)
-                if not dist or dist > new_dist:
-                    dist = new_dist
-                    collision = current
-                # elif current[3] < collision[3]:
-                    # x_farther, y_farther = collision[:2]
-                    # x_closer, y_closer = current[:2]
-                    # d_closer = np.sqrt((x_closer - self.x) ** 2 + (y_closer - self.y) ** 2)
-                    # d_farther = np.sqrt((x_farther - self.x) ** 2 + (y_farther - self.y) ** 2)
-                    # assert d_closer < d_farther, (collision, current)
-                    # collision = current + [obj]
-                # if current and (not collision or current[3] < collision[3]):
-                #     collision = current + (obj,)
-
-        if collision:
-            # print('COOOOOOOOLLISSSSION!', '(with THE wall?', obj is self.game.thewall, ')')
-            self.x, self.y, coll_side, time_moved, obj = collision
-            self.shadow1 = [1, self.x, self.y]
-            obj.on_collision(self, coll_side)
-            if coll_side == 'top' or coll_side == 'btm':
-                self.speedy *= -1
-            if coll_side == 'lft' or coll_side == 'rgt':
-                self.speedx *= -1
-            self.x += self.speedx * (self.game.delta - time_moved)
-            self.y += self.speedy * (self.game.delta - time_moved)
-        else:
-            # print('GOOD TO GO ^_^')
-            # assert not physics.intersects(self, self.game.thewall)
-            self.x += self.speedx * self.game.delta
-            self.y += self.speedy * self.game.delta
-
-        print('AFTER MOVING', physics.intersects(self, self.game.thewall))
+        time_left = self.game.delta
+        while time_left != 0:
+            duration = time_left
+            time_left = physics.move_until_collision(self, self.game.objects, 
+                (Wall, Brick, Paddle, Death), duration)
         
-        print(f'{self.x}, {self.y}, {self.speedx}, {self.speedy}')
+
+
+        # collision = None
+        # dist = None
+        # for obj in self.game.objects:
+        #     if isinstance(obj, (Wall, Brick, Paddle, Death)):
+        #         current = physics.collision(self, obj, self.game.delta)
+        #         if not current:
+        #             continue
+        #         # current = list(current)
+        #         new_dist = np.sqrt((obj.x + obj.w/2 - self.x - self.w/2) ** 2 + (obj.y + obj.h/2 - self.y - self.h/2) ** 2) # how far it went in from static mid point to want
+        #         moved = np.sqrt((current[0] - self.x) ** 2 + (current[1] - self.y) ** 2) # dist from after moved to pre_pos
+        #         total = np.sqrt(self.speedx ** 2 + self.speedy ** 2) # velocity
+        #         time_moved = self.game.delta * moved / total 
+        #         current += (time_moved, obj)
+        #         if not dist or dist > new_dist:
+        #             dist = new_dist
+        #             collision = current
+        #         # elif current[3] < collision[3]:
+        #             # x_farther, y_farther = collision[:2]
+        #             # x_closer, y_closer = current[:2]
+        #             # d_closer = np.sqrt((x_closer - self.x) ** 2 + (y_closer - self.y) ** 2)
+        #             # d_farther = np.sqrt((x_farther - self.x) ** 2 + (y_farther - self.y) ** 2)
+        #             # assert d_closer < d_farther, (collision, current)
+        #             # collision = current + [obj]
+        #         # if current and (not collision or current[3] < collision[3]):
+        #         #     collision = current + (obj,)
+
+        # if collision:
+        #     # print('COOOOOOOOLLISSSSION!', '(with THE wall?', obj is self.game.thewall, ')')
+        #     self.x, self.y, coll_side, time_moved, obj = collision
+        #     self.shadow1 = [1, self.x, self.y]
+        #     obj.on_collision(self, coll_side)
+        #     if coll_side == 'top' or coll_side == 'btm':
+        #         self.speedy *= -1
+        #     if coll_side == 'lft' or coll_side == 'rgt':
+        #         self.speedx *= -1
+        #     self.x += self.speedx * (self.game.delta - time_moved)
+        #     self.y += self.speedy * (self.game.delta - time_moved)
+        # else:
+        #     # print('GOOD TO GO ^_^')
+        #     # assert not physics.intersects(self, self.game.thewall)
+        #     self.x += self.speedx * self.game.delta
+        #     self.y += self.speedy * self.game.delta
+
+        # print('AFTER MOVING', physics.intersects(self, self.game.thewall))
+        # print(f'{self.x}, {self.y}, {self.speedx}, {self.speedy}')
     
     def draw(self):
         if self.shadow1[0] > 0:
@@ -227,7 +234,7 @@ class Paddle(Object):
             self.highlight = 0.5
             self.collside = collside
 
-            collision = physics.collision(obj, self, self.game.delta)
+            collision = physics.find_collision(obj, self, self.game.delta)
             if collision:
                 _, _, side = collision
                 if side == 'top' or side == 'btm':
@@ -265,7 +272,7 @@ class Paddle(Object):
         collision = None
         for obj in self.game.objects:
             if isinstance(obj, (Wall)): 
-                collision = physics.collision(self, obj, self.game.delta)
+                collision = physics.find_collision(self, obj, self.game.delta)
                 if collision:
                     break
         # highlight            
