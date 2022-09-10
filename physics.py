@@ -24,7 +24,7 @@ def find_square_distance(collx, colly, mover_x, mover_y):
     sq_dist = (collx - mover_x) ** 2 + (colly - mover_y) ** 2
     return sq_dist
 
-def find_collision(mover, static, duration, tol=0.001):
+def find_collision(mover, static, duration):
     if mover.speedx == 0 and mover.speedy == 0:
         return
 
@@ -49,16 +49,16 @@ def find_collision(mover, static, duration, tol=0.001):
     # find smaller square distance of mover.x/y to colliding side
     if mover.speedy == 0:
         if mover.speedx > 0:
-            return static_lft - mover.w - tol, want_y, 'lft'
+            return static_lft - mover.w, want_y, 'lft'
             # return distance = 
         else:
-            return static_rgt + tol, want_y, 'rgt'
+            return static_rgt, want_y, 'rgt'
 
     elif mover.speedx == 0:
         if mover.speedy > 0:
-            return want_x, static_btm - mover.h - tol, 'btm'
+            return want_x, static_btm - mover.h, 'btm'
         else:
-            return want_x, static_top + tol, 'top'
+            return want_x, static_top, 'top'
 
     elif mover.speedx >= 0 and mover.speedy >= 0:
         x_delta = mover_rgt - static_lft
@@ -67,19 +67,17 @@ def find_collision(mover, static, duration, tol=0.001):
         # push out left
         mover_x1 = want_x - x_delta
         mover_y1 = want_y - x_delta / mover.speedx * mover.speedy
-        delta1 = static_btm - (mover_y1 + mover.h)
         sq_dist_left = find_square_distance(mover_x1, mover_y1, mover.x, mover.y)
 
         # push out down
         mover_x2 = want_x - y_delta / mover.speedy * mover.speedx
         mover_y2 = want_y - y_delta
-        delta2 = static_lft - (mover_x2 + mover.w)
         sq_dist_down = find_square_distance(mover_x2, mover_y2, mover.x, mover.y)
 
         if sq_dist_left < sq_dist_down:
-            return mover_x1 - tol, mover_y1 - tol, 'lft'
+            return mover_x1, mover_y1, 'lft'
         else:
-            return mover_x2 - tol, mover_y2 - tol, 'btm'
+            return mover_x2, mover_y2, 'btm'
             
     # top rgt collision
     elif mover.speedx <= 0 and mover.speedy <= 0:
@@ -89,21 +87,17 @@ def find_collision(mover, static, duration, tol=0.001):
         # push out right
         mover_x1 = want_x - x_delta
         mover_y1 = want_y - x_delta / mover.speedx * mover.speedy
-        delta1 = mover_y1 - static_top
         sq_dist_right = find_square_distance(mover_x1, mover_y1, mover.x, mover.y)
-
 
         #push out top
         mover_x2 = want_x - y_delta / mover.speedy * mover.speedx
         mover_y2 = want_y - y_delta
-        delta2 = static_rgt - mover_x2
         sq_dist_top = find_square_distance(mover_x2, mover_y2, mover.x, mover.y)
-
         
         if sq_dist_right < sq_dist_top: # TODO changed sign
-            return mover_x1 + tol, mover_y1 + tol, 'rgt'
+            return mover_x1, mover_y1, 'rgt'
         else:
-            return mover_x2 + tol, mover_y2 + tol, 'top'
+            return mover_x2, mover_y2, 'top'
 
     # btm rgt collision
     elif mover.speedx <= 0 and mover.speedy >= 0:
@@ -113,19 +107,17 @@ def find_collision(mover, static, duration, tol=0.001):
         # push out right
         mover_x1 = want_x - x_delta
         mover_y1 = want_y - x_delta / mover.speedx * mover.speedy
-        delta1 = static_btm - (mover_y1 + mover.h)
         sq_dist_right = find_square_distance(mover_x1, mover_y1, mover.x, mover.y)
 
         # push out down
         mover_x2 = want_x - y_delta / mover.speedy * mover.speedx
         mover_y2 = want_y - y_delta
-        delta2 = mover_x2 - static_rgt
         sq_dist_down = find_square_distance(mover_x2, mover_y2, mover.x, mover.y)
 
         if sq_dist_right < sq_dist_down:
-            return mover_x1 + tol, mover_y1 - tol, 'rgt'
+            return mover_x1, mover_y1, 'rgt'
         else:
-            return mover_x2 + tol, mover_y2 - tol, 'btm'
+            return mover_x2, mover_y2, 'btm'
 
     # top lft collision
     elif mover.speedx >= 0 and mover.speedy <= 0:
@@ -135,25 +127,21 @@ def find_collision(mover, static, duration, tol=0.001):
         # push out left
         mover_x1 = want_x - x_delta
         mover_y1 = want_y - x_delta / mover.speedx * mover.speedy
-        delta1 = mover_y1 - static_top
         sq_dist_left = find_square_distance(mover_x1, mover_y1, mover.x, mover.y)
-
 
         # push out up
         mover_x2 = want_x - y_delta / mover.speedy * mover.speedx
         mover_y2 = want_y - y_delta
-        delta2 = static_lft - (mover_x2 + mover.w)
         sq_dist_down = find_square_distance(mover_x2, mover_y2, mover.x, mover.y)
 
-
         if sq_dist_left < sq_dist_down:
-            return mover_x1 - tol, mover_y1 + tol, 'lft'
+            return mover_x1, mover_y1, 'lft'
         else:
-            return mover_x2 - tol, mover_y2 + tol, 'top'
-
+            return mover_x2, mover_y2, 'top'
+    
 
 # obj_types = Wall, Brick, Paddle, Death
-def move_until_collision(mover, objects, obj_types, duration, tol=0.01):
+def move_until_collision(mover, objects, obj_types, duration, tol=0.0001):
     prev_x = mover.x
     prev_y = mover.y
     want_x = mover.x + mover.speedx * duration
@@ -165,7 +153,7 @@ def move_until_collision(mover, objects, obj_types, duration, tol=0.01):
     for obj in objects:
         if not isinstance(obj, obj_types):
             continue
-        current = find_collision(mover, obj, duration, tol)
+        current = find_collision(mover, obj, duration)
 
         # prev pos -> want
         # new_dist = np.sqrt((want_x + mover.w/2 - prev_x + mover.w/2) ** 2 + (want_y + mover.h/2 - prev_y + mover.h/2) ** 2)
@@ -199,8 +187,8 @@ def move_until_collision(mover, objects, obj_types, duration, tol=0.01):
         #calculmalate the fraction
         total = np.sqrt((want_x - prev_x) ** 2 + (want_y - prev_y) ** 2)
         frac_moved = dist / total
-        mover.x = coll_x
-        mover.y = coll_y
+        mover.x = coll_x - tol * mover.speedx
+        mover.y = coll_y - tol * mover.speedy
         obj.on_collision(mover, coll_side)
         if coll_side == 'lft' or coll_side == 'rgt':
             mover.speedx *= -1
