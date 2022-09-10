@@ -131,7 +131,7 @@ class Ball(Object):
                 obj.highlight = 1
             
 
-        print(self.x, self.y, self.speedx, self.speedy)
+        # print(self.x, self.y, self.speedx, self.speedy)
 
 
         # collision = None
@@ -264,8 +264,15 @@ class Paddle(Object):
         if (self.game.pressed('w') or self.game.pressed('i')):
             self.speedy = 7
 
-        time_left, obj = physics.move_until_collision(
+        time_left, obj, side = physics.move_until_collision(
             self, self.game.objects, (Wall, Brick, Ball), self.game.delta)
+        # if isinstance(obj, Ball):
+        #     if side in ('lft', 'rgt'):
+        #         obj.speedx *= -1
+        #     if side in ('top', 'btm'):
+        #         obj.speedy *= -1
+        #     obj.speedx += 0.3 * self.speedx
+        #     obj.speedy += 0.3 * self.speedy
         # if isinstance(obj, Ball):
         #     physics.move_until_collision(
         #         obj, self.game.objects, (Object,),
