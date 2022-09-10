@@ -6,11 +6,11 @@ import levels
 import objects
 TEXTURES = pathlib.Path(__file__).parent / 'textures'
 
-lvl = levels.LEVEL[1:-1].split('\n')[::-1]
+lvl = levels.WALLS[1:-1].split('\n')[::-1]
 grid = len(lvl[0]), len(lvl)
-game = npgame.Game(grid, scale=50, fps=60)#60)
+game = npgame.Game(grid, scale=50, fps=2)
 game.title('Br-Br-Br-Br-Br-Beakout!!!!!!!')
-game.grid = grid 
+game.grid = grid
 
 on = True
 while on:
@@ -19,6 +19,9 @@ while on:
     game.score = 0
     game.lives = 20
     game.bricks = 0
+    def call_reset_screen():
+        screen = game.objects.append(objects.Reset_Screen(game, 1.2, game.grid[1] / 2))
+        return screen
 
 
     for y, row in enumerate(lvl):
@@ -43,16 +46,21 @@ while on:
     while game.running:
         # print('------------------')
         game.update()
-        # game.delta = 0.3
+        game.delta = 0.01
         if game.pressed('escape'):
-            game.running = False
+            game.close()
+            # game.running = False
             on = False
         if game.pressed('space'):
             game.objects.append(objects.Ball(game, grid[0] / 2, grid[1] / 2))
         if game.lives > 0 or game.bricks < 0:
             for obj in game.objects:
+                obj.updated = False
+            for obj in game.objects:
                 obj.update()
+                obj.updated = True
         else:
+            call_reset_screen()
             game.objects.append(objects.Reset_Screen(game, x, y))
             if game.pressed('y'):
                 game.running = False

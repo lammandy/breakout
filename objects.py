@@ -17,6 +17,7 @@ death = pygame.mixer.Sound(SOUNDS / 'death.wav')
 music = pygame.mixer.music.load(SOUNDS / 'arabian.wav')
 pygame.mixer.music.play(-1)
 
+
 class Object:
     
     def __init__(self, game, x, y, w=1, h=1, z=0, image=None, color=(1, 1, 1)):
@@ -30,6 +31,8 @@ class Object:
         self.color = color
         self.timer = 0
         self.collside = None
+        self.updated = False
+        self.highlight = 0
 
     def on_collision(self, obj, collside):
         self.timer = 0.5
@@ -38,6 +41,8 @@ class Object:
     def update(self):
         if self.timer > 0:
             self.timer -= self.game.delta
+        if self.highlight > 0:
+            self.highlight -= self.game.delta
 
     def draw(self):
         if self.image:
@@ -56,6 +61,8 @@ class Object:
                 self.game.draw(self.x, self.y + self.h - .1, self.w, .1, color=(0.5, 1, 0))
             if self.collside == 'btm':
                 self.game.draw(self.x, self.y, self.w, .1, color=(1, 1, 0.5))
+        if self.highlight > 0:
+            self.game.draw(self.x, self.y, self.w, self.h, color=(1, 0, 0, 0.5))
 
 
 class Scoreboard(Object):
@@ -73,6 +80,7 @@ class Reset_Screen(Object):
         super().__init__(game, x, y, z=1)
         self.x = 1.2 
         self.y = game.grid[1] / 2
+        
     def update(self):
         pass
     def draw(self):
@@ -82,10 +90,9 @@ class Reset_Screen(Object):
 class Ball(Object):
     
     def __init__(self, game, x, y):
-        super().__init__(game, x, y, w=0.5, h=0.5, z=2)
-        # super().__init__(game, x= 2.6, y=1.95, w=0.5, h=0.5, z=2) # for Walls troubleshoot
-        self.speedx = 2.0
-        self.speedy = -1.5
+        super().__init__(game, x=5.6, y=1.237, w=0.5, h=0.5, z=2)
+        self.speedx = -2.4
+        self.speedy = -4.249
         self.shadow1 = [0, 0, 0]
         self.shadow2 = [0, 0, 0]
         self.shadow3 = [0, 0, 0]
@@ -106,12 +113,25 @@ class Ball(Object):
         self.shadow2 = [0.0001, self.x, self.y] # grey
         self.shadow3 = [0.0001, self.x + self.speedx * self.game.delta, self.y + self.speedy * self.game.delta] # green
 
-        time_left = self.game.delta
-        while time_left != 0:
-            duration = time_left
-            time_left = physics.move_until_collision(self, self.game.objects, 
-                (Wall, Brick, Paddle, Death), duration)
-        
+        # time_left = self.game.delta
+        # while time_left > 0.001:
+        #     duration = time_left
+        #     time_left, _ = physics.move_until_collision(
+        #         self, self.game.objects, (Wall, Brick, Paddle, Death), duration)
+        physics.move_until_collision(
+                 self, self.game.objects, (Wall, Brick, Paddle, Death), self.game.delta)
+
+        for obj in self.game.objects:
+            if obj is self:
+                continue
+            if physics.intersects(self, obj):
+                if isinstance(obj, Ball):
+                    continue
+                print('Ball intersects with', obj, 'at', obj.x, obj.y)
+                obj.highlight = 1
+            
+
+        print(self.x, self.y, self.speedx, self.speedy)
 
 
         # collision = None
@@ -123,6 +143,7 @@ class Ball(Object):
         #             continue
         #         # current = list(current)
         #         new_dist = np.sqrt((obj.x + obj.w/2 - self.x - self.w/2) ** 2 + (obj.y + obj.h/2 - self.y - self.h/2) ** 2) # how far it went in from static mid point to want
+ 
         #         moved = np.sqrt((current[0] - self.x) ** 2 + (current[1] - self.y) ** 2) # dist from after moved to pre_pos
         #         total = np.sqrt(self.speedx ** 2 + self.speedy ** 2) # velocity
         #         time_moved = self.game.delta * moved / total 
@@ -169,7 +190,6 @@ class Ball(Object):
             self.game.draw(self.shadow3[1], self.shadow3[2], self.w, self.h, (.2, 1, .2, .5))
         super().draw()
 
-
 class Brick(Object):
     def __init__(self, game, x, y):
         super().__init__(game, x + 0.1, y + 0.1, 0.8, 0.8, color=np.random.uniform(0, 1, 3))
@@ -206,7 +226,8 @@ class Death(Object):
     def on_collision(self, obj, collside):
         super().on_collision(obj, collside)
         if isinstance(obj, Ball):
-            self.game.objects.remove(obj)
+            if obj in self.game.objects:
+                self.game.objects.remove(obj)
             self.game.lives -= 1
         if self.game.lives != 0:
             self.game.objects.append(Ball(self.game, 5, 5))
@@ -221,68 +242,48 @@ class Paddle(Object):
         super().__init__(game, x + 0.01, y + 0.01, w=2.5, h=0.7, z=1)
         self.speedx = 0
         self.speedy = 0
-        self.pausedx = 0
-        self.pausedy = 0
-        self.highlight = 0
-        self.collside = ''
         self.color = (.8, .8, .8)
 
-    def on_collision(self, obj, collside):
-        super().on_collision(obj, collside)
+    def on_collision(self, obj, side):
+        super().on_collision(obj, side)
         if isinstance(obj, Ball):
             pygame.mixer.Sound.play(bounce)
-            self.highlight = 0.5
-            self.collside = collside
-
-            collision = physics.find_collision(obj, self, self.game.delta)
-            if collision:
-                _, _, side = collision
-                if side == 'top' or side == 'btm':
-                    self.pausedy = 0.1
-                    # obj.speedx += 0.3 * self.speedx
-                if side == 'lft' or side == 'rgt':
-                    self.pausedx = 0.1
-                    # obj.speedy += 0.3 * self.speedy
-        obj.speedx += 0.3 * self.speedx
-        obj.speedy += 0.3 * self.speedy
+            obj.speedx += 0.3 * self.speedx
+            obj.speedy += 0.3 * self.speedy
 
     def update(self):
         super().update()
         self.speedx = 0
         self.speedy = 0
         if (self.game.pressed('a') or self.game.pressed('j')):
-            self.speedx = -10
+            self.speedx = -7
         if (self.game.pressed('d') or self.game.pressed('l')):
-            self.speedx = 10
+            self.speedx = 7
         if (self.game.pressed('s') or self.game.pressed('k')):
-            self.speedy = -10
+            self.speedy = -7
         if (self.game.pressed('w') or self.game.pressed('i')):
-            self.speedy = 10
+            self.speedy = 7
 
-        if self.pausedx > 0:
-            self.speedx = 0
-            self.pausedx -= self.game.delta
-        if self.pausedy > 0:
-            self.speedy = 0
-            self.pausedy -= self.game.delta
-        
-        self.x += self.speedx * self.game.delta
-        self.y += self.speedy * self.game.delta
-
-        collision = None
+        time_left, obj = physics.move_until_collision(
+            self, self.game.objects, (Wall, Brick, Ball), self.game.delta)
+        # if isinstance(obj, Ball):
+        #     physics.move_until_collision(
+        #         obj, self.game.objects, (Object,),
+        #         self.game.delta - time_left)
         for obj in self.game.objects:
-            if isinstance(obj, (Wall)): 
-                collision = physics.find_collision(self, obj, self.game.delta)
-                if collision:
-                    break
-        # highlight            
-        if self.highlight > 0:
-            self.highlight -= self.game.delta
+            if obj is self:
+                continue
+            if physics.intersects(self, obj):
+                print('Paddle intersects with', obj, 'at', obj.x, obj.y)
+                obj.highlight = 1
 
-        if collision:
-            self.x, self.y, coll_side = collision
-            obj.on_collision(self, coll_side)    
-    
+        # for obj in self.game.objects:
+        #     if isinstance(obj, (Ball, Wall, Brick)):
+        #         if physics.intersects(self, obj):
+        #             print(f'intersecting w/ {obj}')
+        # self.speedx = 0
+        # self.speedy = 0
+
     def draw(self):
         self.game.draw(self.x, self.y, self.w, self.h, color=self.color)
         self.draw_higlight()
