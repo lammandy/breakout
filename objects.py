@@ -238,9 +238,6 @@ class Wall(Object):
         if self.has_btm:
             self.game.draw(self.x, self.y, self.w, .1, color=(1, 1, 0.5))
 
-        if self is self.game.thewall:
-            self.game.draw(self.x, self.y, 1, 1, (1, 1, 1, 0.2))
-
         
 class Death(Object):
 
