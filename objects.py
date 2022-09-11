@@ -33,6 +33,10 @@ class Object:
         self.collside = None
         self.updated = False
         self.highlight = 0
+        self.has_top = True
+        self.has_rgt = True
+        self.has_btm = True
+        self.has_lft = True
 
     def on_collision(self, obj, collside):
         self.timer = 0.5
@@ -52,6 +56,7 @@ class Object:
         self.draw_higlight()
 
     def draw_higlight(self):
+        return  # TODO
         if self.timer > 0:
             if self.collside == 'lft':
                 self.game.draw(self.x, self.y, .1, self.h, color=(1, 1, 0))
@@ -97,6 +102,13 @@ class Ball(Object):
         self.shadow2 = [0, 0, 0]
         self.shadow3 = [0, 0, 0]
 
+    def on_collision(self, obj, side):
+        # super().on_collision(obj, side)
+        if isinstance(obj, Paddle):
+            pygame.mixer.Sound.play(bounce)
+            self.speedx += 0.6 * self.speedx
+            self.speedy += 0.6 * self.speedy
+
     def update(self):
         super().update()
         self.shadow1[0] -= self.game.delta
@@ -121,14 +133,14 @@ class Ball(Object):
         physics.move_until_collision(
                  self, self.game.objects, (Wall, Brick, Paddle, Death), self.game.delta)
 
-        for obj in self.game.objects:
-            if obj is self:
-                continue
-            if physics.intersects(self, obj):
-                if isinstance(obj, Ball):
-                    continue
-                print('Ball intersects with', obj, 'at', obj.x, obj.y)
-                obj.highlight = 1
+        # for obj in self.game.objects:
+        #     if obj is self:
+        #         continue
+        #     if physics.intersects(self, obj):
+        #         if isinstance(obj, Ball):
+        #             continue
+        #         print('Ball intersects with', obj, 'at', obj.x, obj.y)
+        #         obj.highlight = 1
             
 
         # print(self.x, self.y, self.speedx, self.speedy)
@@ -181,18 +193,20 @@ class Ball(Object):
         # print('AFTER MOVING', physics.intersects(self, self.game.thewall))
         # print(f'{self.x}, {self.y}, {self.speedx}, {self.speedy}')
     
-    def draw(self):
-        if self.shadow1[0] > 0:
-            self.game.draw(self.shadow1[1], self.shadow1[2], self.w, self.h, (1, .2, .2, .5))
-        if self.shadow2[0] > 0:
-            self.game.draw(self.shadow2[1], self.shadow2[2], self.w, self.h, (.7, .7, .7, .5))
-        if self.shadow3[0] > 0:
-            self.game.draw(self.shadow3[1], self.shadow3[2], self.w, self.h, (.2, 1, .2, .5))
-        super().draw()
+    # def draw(self):
+    #     if self.shadow1[0] > 0:
+    #         self.game.draw(self.shadow1[1], self.shadow1[2], self.w, self.h, (1, .2, .2, .5))
+    #     if self.shadow2[0] > 0:
+    #         self.game.draw(self.shadow2[1], self.shadow2[2], self.w, self.h, (.7, .7, .7, .5))
+    #     if self.shadow3[0] > 0:
+    #         self.game.draw(self.shadow3[1], self.shadow3[2], self.w, self.h, (.2, 1, .2, .5))
+    #     super().draw()
 
 class Brick(Object):
-    def __init__(self, game, x, y):
-        super().__init__(game, x + 0.1, y + 0.1, 0.8, 0.8, color=np.random.uniform(0, 1, 3))
+    def __init__(self, game, x, y, size=0.5):
+        x += (1 - size) / 2 + np.random.uniform(-0.05, 0.05)
+        y += (1 - size) / 2 + np.random.uniform(-0.05, 0.05)
+        super().__init__(game, x, y, size, size, color=np.random.uniform(0, 1, 3))
         game.bricks += 1
     def on_collision(self, obj, collside):
         super().on_collision(obj, collside)
@@ -206,6 +220,7 @@ class Wall(Object):
 
     def __init__(self, game, x, y):
         super().__init__(game, x, y, image='wall.png')
+        # self.has_btm = False
 
     def on_collision(self, obj, collside):
         super().on_collision(obj, collside)
@@ -214,6 +229,15 @@ class Wall(Object):
 
     def draw(self):
         super().draw()
+        if self.has_lft:
+            self.game.draw(self.x, self.y, .1, self.h, color=(0, 0, 1))
+        if self.has_rgt:
+            self.game.draw(self.x + self.w - .1, self.y, .1, self.h, color=(1, .5, 0)) # orange
+        if self.has_top:
+            self.game.draw(self.x, self.y + self.h - .1, self.w, .1, color=(0.5, 1, 0))
+        if self.has_btm:
+            self.game.draw(self.x, self.y, self.w, .1, color=(1, 1, 0.5))
+
         if self is self.game.thewall:
             self.game.draw(self.x, self.y, 1, 1, (1, 1, 1, 0.2))
 
@@ -277,12 +301,13 @@ class Paddle(Object):
         #     physics.move_until_collision(
         #         obj, self.game.objects, (Object,),
         #         self.game.delta - time_left)
-        for obj in self.game.objects:
-            if obj is self:
-                continue
-            if physics.intersects(self, obj):
-                print('Paddle intersects with', obj, 'at', obj.x, obj.y)
-                obj.highlight = 1
+
+        # for obj in self.game.objects:
+        #     if obj is self:
+        #         continue
+        #     if physics.intersects(self, obj):
+        #         print('Paddle intersects with', obj, 'at', obj.x, obj.y)
+        #         obj.highlight = 1
 
         # for obj in self.game.objects:
         #     if isinstance(obj, (Ball, Wall, Brick)):

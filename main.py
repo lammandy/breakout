@@ -6,7 +6,7 @@ import levels
 import objects
 TEXTURES = pathlib.Path(__file__).parent / 'textures'
 
-lvl = levels.WALLS[1:-1].split('\n')[::-1]
+lvl = levels.SECRET_LEVEL[1:-1].split('\n')[::-1]
 grid = len(lvl[0]), len(lvl)
 game = npgame.Game(grid, scale=50, fps=60)
 game.title('Br-Br-Br-Br-Br-Beakout!!!!!!!')
@@ -23,14 +23,29 @@ while on:
         screen = game.objects.append(objects.Reset_Screen(game, 1.2, game.grid[1] / 2))
         return screen
 
-
     for y, row in enumerate(lvl):
         for x, char in enumerate(row):
             if char == 'o':
                 game.objects.append(objects.Brick(game, x, y))
                 # game.add(objects.Brick, x, 6)
             if char == '#' or char =='s':
-                game.objects.append(objects.Wall(game, x, y))
+                wall = objects.Wall(game, x, y)
+                wall.has_btm = (0 <= y - 1) and (lvl[y - 1][x] != '#')
+                wall.has_top = (y + 1 < grid[1]) and (lvl[y + 1][x] != '#')
+                wall.has_lft = (0 <= x - 1) and (lvl[y][x - 1] != '#')
+                wall.has_rgt = (x + 1 < grid[0]) and (lvl[y][x + 1] != '#')
+
+                # if y < grid[1] - 1: 
+                #     # print(f'{lvl[3][1]}')
+                #     # print(f'{lvl[1][3]}') = p (count up, count across)
+                #     # print(f'{x}, {y+1}')
+                #     # print(f'{lvl[x][y+1]}')
+                #     wall.has_btm = (lvl[x][y+1] != '#')
+                #     wall.has_top = (y + 1) != '#'
+                # wall.has_lft = (x >= 1) and ((x - 1) != '#')
+                
+                # wall.has_rgt = (x < grid[0] - 1) and ((x + 1) != '#')
+                game.objects.append(wall)
             if char == 'p':
                 game.objects.append(objects.Paddle(game, x, y))
             if char == 'b':
@@ -69,7 +84,7 @@ while on:
                 game.running = False
                 on = False
 
-        game.draw(0, 0, *grid, image=TEXTURES / 'bg.png')
+        # game.draw(0, 0, *grid, image=TEXTURES / 'bg.png')
         for obj in sorted(game.objects, key=lambda obj: obj.z):
             obj.draw()
 
