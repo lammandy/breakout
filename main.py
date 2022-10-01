@@ -18,6 +18,7 @@ def load_level(game, lvl_str):
 
     game.resize(grid, scale=50)
     game.grid = grid
+    game.lvl = lvl
     game.objects = []
     game.score = 0
     game.lives = 10
@@ -87,7 +88,7 @@ def run_game(game, level):
                 return True, levels.CHOOSE_LVL
             if game.pressed('return') and pos == 5:
                 pygame.mixer.Sound.play(bounce)
-                return True, levels.LEVEL
+                return True, levels.SECRET_LEVEL
         # game.delta = 0.01
         if game.pressed('escape'):
             return False

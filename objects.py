@@ -270,9 +270,10 @@ class Death(Object):
             self.game.lives -= 1
             pygame.mixer.Sound.play(death)
         if self.game.lives != 0:
-            # check if x, y = ' ', add ball
-            num = random.choice(range(1, self.game.grid[0])) #grid row where it is okay for ball to generate wherever 
-            self.game.objects.append(Ball(self.game, num, 5))
+            num = 0 # wall
+            while self.game.lvl[5][num] != ' ':
+                num = random.choice(range(1, self.game.grid[0] - 1))
+            self.game.objects.append(Ball(self.game, num, 5))      
         if self.game.lives == 0:
             pygame.mixer.fadeout(5)
             pygame.mixer.Sound.play(final_death)
