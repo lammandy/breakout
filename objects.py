@@ -3,6 +3,8 @@ from msilib.schema import Font
 import pathlib
 import numpy as np
 import physics 
+import random
+
 
 TEXTURES = pathlib.Path(__file__).parent / 'textures'
 SOUNDS = pathlib.Path(__file__).parent / 'sounds'
@@ -14,6 +16,7 @@ bounce = pygame.mixer.Sound(SOUNDS / 'bounce.wav')
 bounce2 = pygame.mixer.Sound(SOUNDS / 'bounce2.wav')
 bounce3 = pygame.mixer.Sound(SOUNDS / 'bounce3.wav')
 death = pygame.mixer.Sound(SOUNDS / 'death.wav')
+final_death = pygame.mixer.Sound(SOUNDS / 'final_death.wav')
 music = pygame.mixer.music.load(SOUNDS / 'arabian.wav')
 pygame.mixer.music.play(-1)
 
@@ -69,6 +72,17 @@ class Object:
         if self.highlight > 0:
             self.game.draw(self.x, self.y, self.w, self.h, color=(1, 0, 0, 0.5))
 
+# TODO create choose level, quit -> make cursor movable
+# TODO create choose level screen -> make highlight of object movable
+
+class Text(Object):
+    def __init__(self, game, x, y, msg_str):
+        super().__init__(game, x, y, z=1)
+        self.msg_str = msg_str
+    def update(self):
+        pass
+    def draw(self):
+        self.game.text(self.x, self.y, message=self.msg_str, font='slkscr.ttf', color=(1, 1, 1), size=.7)
 
 class Scoreboard(Object):
     def __init__(self, game, x, y):
@@ -83,19 +97,23 @@ class Scoreboard(Object):
 class Reset_Screen(Object):
     def __init__(self, game, x, y):
         super().__init__(game, x, y, z=1)
-        self.x = 1.2 
+        self.message = "'n' to choose new level, 'esc' to quit"
+        message_width = len(self.message) * 0.35
+        self.margin = (game.grid[0] - message_width) /2
+        self.x = self.margin
         self.y = game.grid[1] / 2
         
     def update(self):
         pass
     def draw(self):
-        self.game.text(self.x, self.y, message=f"Final Score: {str(self.game.score)} Press 'y' to continue or 'n' to quit", font='slkscr.ttf', color=(1, 1, 1), size=.6)
+        self.game.text(self.x, self.y, message=f"Final Score: {str(self.game.score)} Press 'y' to continue", font='slkscr.ttf', color=(1, 1, 1), size=.6)
+        self.game.text(self.x, self.y - 0.7, message=self.message, font='slkscr.ttf', color=(1, 1, 1), size=.6)
 
 
 class Ball(Object):
     
     def __init__(self, game, x, y):
-        super().__init__(game, x=5.6, y=1.237, w=0.5, h=0.5, z=2)
+        super().__init__(game, x, y, w=0.5, h=0.5, z=2, image='ball.png')
         self.speedx = -2.4
         self.speedy = -4.249
         self.shadow1 = [0, 0, 0]
@@ -131,7 +149,7 @@ class Ball(Object):
         #     time_left, _ = physics.move_until_collision(
         #         self, self.game.objects, (Wall, Brick, Paddle, Death), duration)
         physics.move_until_collision(
-                 self, self.game.objects, (Wall, Brick, Paddle, Death), self.game.delta)
+                 self, self.game.objects, (Wall, Brick, Paddle, Death, Wormhole), self.game.delta)
 
         # for obj in self.game.objects:
         #     if obj is self:
@@ -250,17 +268,20 @@ class Death(Object):
             if obj in self.game.objects:
                 self.game.objects.remove(obj)
             self.game.lives -= 1
+            pygame.mixer.Sound.play(death)
         if self.game.lives != 0:
-            self.game.objects.append(Ball(self.game, 5, 5))
+            # check if x, y = ' ', add ball
+            num = random.choice(range(1, self.game.grid[0])) #grid row where it is okay for ball to generate wherever 
+            self.game.objects.append(Ball(self.game, num, 5))
         if self.game.lives == 0:
             pygame.mixer.fadeout(5)
-            pygame.mixer.Sound.play(death)
+            pygame.mixer.Sound.play(final_death)
 
 
 class Paddle(Object):
 
     def __init__(self, game, x, y):
-        super().__init__(game, x + 0.01, y + 0.01, w=2.5, h=0.7, z=1)
+        super().__init__(game, x + 0.01, y + 0.01, w=2.5, h=0.7, z=1, image='rug.png')
         self.speedx = 0
         self.speedy = 0
         self.color = (.8, .8, .8)
@@ -313,6 +334,24 @@ class Paddle(Object):
         # self.speedx = 0
         # self.speedy = 0
 
-    def draw(self):
-        self.game.draw(self.x, self.y, self.w, self.h, color=self.color)
-        self.draw_higlight()
+    # def draw(self):
+    #     self.game.draw(self.x, self.y, self.w, self.h, color=self.color)
+    #     self.draw_higlight()
+
+
+class Wormhole(Object):
+
+    def __init__(self, game, x, y):
+        super().__init__(game, x, y, color=(0, 1, 1))
+
+    def on_collision(self, obj, collside):
+        super().on_collision(obj, collside)
+        if isinstance(obj, Ball):
+            obj.x = 9
+            obj.y = 5
+            obj.speedx *= 0.5
+            obj.speedy *= 0.5
+            
+# class Thumbnail(Object):
+
+#     lvl = lvl_str[1:-1].split('\n')[::-1]
