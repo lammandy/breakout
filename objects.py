@@ -12,11 +12,14 @@ SOUNDS = pathlib.Path(__file__).parent / 'sounds'
 pygame.init()
 pygame.mixer.init()
 
+action = pygame.mixer.Sound(SOUNDS / 'action.wav')
 bounce = pygame.mixer.Sound(SOUNDS / 'bounce.wav')
 bounce2 = pygame.mixer.Sound(SOUNDS / 'bounce2.wav')
 bounce3 = pygame.mixer.Sound(SOUNDS / 'bounce3.wav')
 death = pygame.mixer.Sound(SOUNDS / 'death.wav')
 final_death = pygame.mixer.Sound(SOUNDS / 'final_death.wav')
+life = pygame.mixer.Sound(SOUNDS / 'life.wav')
+teleport = pygame.mixer.Sound(SOUNDS / 'teleport.wav')
 music = pygame.mixer.music.load(SOUNDS / 'arabian.wav')
 pygame.mixer.music.play(-1)
 
@@ -72,8 +75,6 @@ class Object:
         if self.highlight > 0:
             self.game.draw(self.x, self.y, self.w, self.h, color=(1, 0, 0, 0.5))
 
-# TODO create choose level, quit -> make cursor movable
-# TODO create choose level screen -> make highlight of object movable
 
 class Text(Object):
     def __init__(self, game, x, y, msg_str):
@@ -105,6 +106,7 @@ class Reset_Screen(Object):
         
     def update(self):
         pass
+
     def draw(self):
         self.game.text(self.x, self.y, message=f"Final Score: {str(self.game.score)} Press 'y' to continue", font='slkscr.ttf', color=(1, 1, 1), size=.6)
         self.game.text(self.x, self.y - 0.7, message=self.message, font='slkscr.ttf', color=(1, 1, 1), size=.6)
@@ -119,9 +121,9 @@ class Ball(Object):
         self.shadow1 = [0, 0, 0]
         self.shadow2 = [0, 0, 0]
         self.shadow3 = [0, 0, 0]
+        game.balls += 1
 
     def on_collision(self, obj, side):
-        # super().on_collision(obj, side)
         if isinstance(obj, Paddle):
             pygame.mixer.Sound.play(bounce)
             self.speedx += 0.6 * self.speedx
@@ -149,7 +151,7 @@ class Ball(Object):
         #     time_left, _ = physics.move_until_collision(
         #         self, self.game.objects, (Wall, Brick, Paddle, Death), duration)
         physics.move_until_collision(
-                 self, self.game.objects, (Wall, Brick, Paddle, Death, Wormhole), self.game.delta)
+                 self, self.game.objects, (Wall, Brick, Super_Brick, Life_Brick, Paddle, Death, Wormhole), self.game.delta)
 
         # for obj in self.game.objects:
         #     if obj is self:
@@ -218,7 +220,8 @@ class Ball(Object):
     #         self.game.draw(self.shadow2[1], self.shadow2[2], self.w, self.h, (.7, .7, .7, .5))
     #     if self.shadow3[0] > 0:
     #         self.game.draw(self.shadow3[1], self.shadow3[2], self.w, self.h, (.2, 1, .2, .5))
-    #     super().draw()
+        # super().draw()
+
 
 class Brick(Object):
     def __init__(self, game, x, y, size=0.5):
@@ -231,8 +234,53 @@ class Brick(Object):
         if isinstance(obj, Ball):
             self.game.objects.remove(self)
             self.game.score += 10
+            self.game.bricks -= 1
             pygame.mixer.Sound.play(bounce2)
 
+
+class Super_Brick(Object):
+    def __init__(self, game, x, y, size=0.5):
+        x += (1 - size) / 2 + np.random.uniform(-0.05, 0.05)
+        y += (1 - size) / 2 + np.random.uniform(-0.05, 0.05)
+        super().__init__(game, x, y, size, size, color=np.random.uniform(0, 1, 3))
+        game.bricks += 1
+        self.lives = 2
+    def on_collision(self, obj, collside):
+        super().on_collision(obj, collside)
+        if isinstance(obj, Ball):
+            self.lives -= 1
+            if self.lives == 0:
+                self.game.objects.remove(self)
+                self.game.bricks -= 1
+                self.game.score += 20
+                self.game.objects.append(Ball(self.game, self.x, self.y))      
+
+            pygame.mixer.Sound.play(bounce2)
+
+
+class Life_Brick(Object):
+    def __init__(self, game, x, y, size=0.5):
+        x += (1 - size) / 2 + np.random.uniform(-0.05, 0.05)
+        y += (1 - size) / 2 + np.random.uniform(-0.05, 0.05)
+        super().__init__(game, x, y, size, size, image='heart.png')
+        game.bricks += 1
+
+    def on_collision(self, obj, collside):
+        super().on_collision(obj, collside)
+        if isinstance(obj, Ball):
+            self.game.objects.remove(self)
+            self.game.bricks -= 1
+            self.game.lives += 1
+            pygame.mixer.Sound.play(life)
+            self.timer = 10
+            self.game.text(self.x, self.y, message='+1', font='slkscr.ttf', color=(1, 1, 1), size=.7)
+
+
+    # def draw(self):
+    #     super().draw()
+    #     if self.timer > 0:
+    #         self.game.text(self.x, self.y, message='+1', font='slkscr.ttf', color=(1, 1, 1), size=.7)
+       
 
 class Wall(Object):
 
@@ -260,20 +308,22 @@ class Wall(Object):
 class Death(Object):
 
     def __init__(self, game, x, y):
-        super().__init__(game, x, y, image='lava.png')
+        super().__init__(game, x, y, image='spikes.png')
     
     def on_collision(self, obj, collside):
         super().on_collision(obj, collside)
         if isinstance(obj, Ball):
             if obj in self.game.objects:
                 self.game.objects.remove(obj)
-            self.game.lives -= 1
+                self.game.balls -= 1
+            if self.game.balls == 0:
+                self.game.lives -= 1
             pygame.mixer.Sound.play(death)
-        if self.game.lives != 0:
+        if self.game.balls == 0 and self.game.lives != 0:
             num = 0 # wall
-            while self.game.lvl[5][num] != ' ':
+            while self.game.lvl[6][num] != ' ':
                 num = random.choice(range(1, self.game.grid[0] - 1))
-            self.game.objects.append(Ball(self.game, num, 5))      
+            self.game.objects.append(Ball(self.game, num, 6))      
         if self.game.lives == 0:
             pygame.mixer.fadeout(5)
             pygame.mixer.Sound.play(final_death)
@@ -308,7 +358,7 @@ class Paddle(Object):
             self.speedy = 7
 
         time_left, obj, side = physics.move_until_collision(
-            self, self.game.objects, (Wall, Brick, Ball), self.game.delta)
+            self, self.game.objects, (Wall, Brick, Super_Brick, Life_Brick, Ball), self.game.delta)
         # if isinstance(obj, Ball):
         #     if side in ('lft', 'rgt'):
         #         obj.speedx *= -1
@@ -343,16 +393,24 @@ class Paddle(Object):
 class Wormhole(Object):
 
     def __init__(self, game, x, y):
-        super().__init__(game, x, y, color=(0, 1, 1))
+        super().__init__(game, x, y, image='wormhole.png')
 
     def on_collision(self, obj, collside):
         super().on_collision(obj, collside)
         if isinstance(obj, Ball):
-            obj.x = 9
-            obj.y = 5
+            num = random.randint(1, self.game.grid[0] - 1)
+            obj.x = num
+            obj.y = 6
             obj.speedx *= 0.5
             obj.speedy *= 0.5
-            
-# class Thumbnail(Object):
+            pygame.mixer.Sound.play(teleport)
 
-#     lvl = lvl_str[1:-1].split('\n')[::-1]
+
+class Thumbnail(Object):
+    def __init__(self, game, x, y, msg_str):
+        super().__init__(game, x, y, w=2, h=2, z=2, image='wall.png')
+        self.msg_str = msg_str
+    def update(self):
+        pass
+    def draw(self):
+        self.game.text(self.x, self.y, message=self.msg_str, font='slkscr.ttf', color=(1, 1, 1), size=2)

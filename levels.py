@@ -1,34 +1,84 @@
-LEVEL = """
-#####################
-#ooooooooooooooooooo#
-#ooooooooooooooooooo#
-#ooooooooooooooooooo#
-#     b             #
-#                   #
-#      w            #
-#                   #
-#  p                #
-#^^^^^^^^^^^^^^^^^^^#
-#####s###############
+LEVEL_1 = """
+###################
+#ooooooooooooooooo#
+#ooooooooooooooooo#
+#ooooooooooooooooo#
+#     b           #
+#                 #
+#                 #
+#                 #
+#                 #
+#  p              #
+#^^^^^^^^^^^^^^^^^#
+#####s#############
 """
 
-WALLS = """
-#########
-###### ##
-#   # o##
-##  b   #
-#       #
-## p    #
-#########
+LEVEL_2 = """
+##################
+#+oooooooooooooo+#
+#oooooo+++ooooooo#
+# oooooooooooooo #
+#    xxxxxx b    #
+#     wwww       #
+#                #
+#                #
+#                #
+#                #
+#                #
+#  p             #
+#^^^^^^^^^^^^^^^^#
+#####s############
 """
 
-SECRET_LEVEL = """
+LEVEL_3 = """
+#################
+#ooooooooxoooooo#
+#         oooxoo#
+#   b      ooooo#
+#      # x+++   #
+#      #        #
+#  p            #
+#^^^^^^^^^^^^^^^#
+#####s###########
+"""
+
+LEVEL_4 = """
+###############
+#w           w#
+#    xxxxx    #
+#    xxxxx  b #
+#    xxxxx    #
+#             #
+#             #
+#             #
+#  p          #
+#^^^^^^^^^^^^^#
+#####s#########
+"""
+
+LEVEL_5 = """
+#################
+#ooooooooooo+oox#
+#xoooo+ooooooooo#
+#x+ooooooooooooo#
+#w          b   #
+##             ##
+#               #
+#      ###      #
+#               #
+#               #
+#    p       w  #
+#^^^^^^^^^^^^^^^#
+#####s###########
+"""
+
+LEVEL_6 = """
 #####################
-#ooooooooooooooooooo#
+#oooooooooooooooooox#
 #########ooooooooooo#
-#ooooooooooooooooooo#
-#oooooooooooo########
-#    oooo           #
+#ooooxoooooxoooooxoo#
+#ooooooxooooo########
+#    oooo         w #
 #    ####   b       #
 #         p         #
 #    ^^^^^^^^^^^    #
@@ -41,22 +91,32 @@ START_UP = """
 #################
 #               #
 #               #
-#    1          #
-#    2          #
-#    3          #
+#    >          #
+#    <          #
+#    ?          #
 #               #
 #               #
 #################
 """
 
 CHOOSE_LVL = """
-#################
-#               #
-#   ww  ww  ww  #
-#               #
-#               #
-#               #
-#               #
-#               #
-#################
+##################
+#                #
+#   ##  ##  ##   #
+#   1#  2#  3#   #
+#                #
+#   ##  ##  ##   #
+#   4#  5#  6#   #
+#                #
+##################
+"""
+
+WALLS = """
+#########
+###### ##
+#   # o##
+##  b   #
+#       #
+## p    #
+#########
 """

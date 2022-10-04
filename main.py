@@ -1,34 +1,37 @@
-import pathlib
+import random
 
 import npgame
 import pygame
 
 import levels
 import objects
-from objects import bounce, bounce2, TEXTURES, SOUNDS
+from objects import action, bounce, bounce2, TEXTURES
 
 pygame.init()
 pygame.mixer.init()
-
-# bounce = pygame.mixer.Sound(SOUNDS / 'bounce.wav')
 
 def load_level(game, lvl_str):
     lvl = lvl_str[1:-1].split('\n')[::-1]
     grid = len(lvl[0]), len(lvl)
 
-    game.resize(grid, scale=50)
+    game.resize(grid, scale=40)
     game.grid = grid
     game.lvl = lvl
     game.objects = []
     game.score = 0
     game.lives = 10
     game.bricks = 0
-
+    game.balls = 0
+    
     for y, row in enumerate(lvl):
         for x, char in enumerate(row):
             if char == 'o':
                 game.objects.append(objects.Brick(game, x, y))
-            if char == '#' or char =='s':
+            if char == 'x':
+                game.objects.append(objects.Super_Brick(game, x, y))
+            if char == '+':
+                game.objects.append(objects.Life_Brick(game, x, y))
+            if char == '#' or char =='s' or [x for x in range(1,7) if char == str(x)]:
                 wall = objects.Wall(game, x, y)
                 wall.has_btm = (0 <= y - 1) and (lvl[y - 1][x] != '#')
                 wall.has_top = (y + 1 < game.grid[1]) and (lvl[y + 1][x] != '#')
@@ -43,12 +46,16 @@ def load_level(game, lvl_str):
                 game.objects.append(objects.Death(game, x, y))
             if char == 's':
                 game.objects.append(objects.Scoreboard(game, x, y))
-            if char == '1':
+            if char == '>':
                 game.objects.append(objects.Text(game, x, y, 'start'))
-            if char == '2':
+            if char == '<':
                 game.objects.append(objects.Text(game, x, y, 'choose level'))
-            if char == '3':
-                game.objects.append(objects.Text(game, x, y, 'quit'))                  
+            if char == '?':
+                game.objects.append(objects.Text(game, x, y, 'quit'))     
+            for num in range(1,7):
+                num_str = str(num)
+                if char == num_str:
+                   game.objects.append(objects.Thumbnail(game, x, y, num_str))                    
             if char == 'w':
                 game.objects.append(objects.Wormhole(game, x, y))
 
@@ -88,10 +95,23 @@ def run_game(game, level):
                 return True, levels.CHOOSE_LVL
             if game.pressed('return') and pos == 5:
                 pygame.mixer.Sound.play(bounce)
-                return True, levels.SECRET_LEVEL
+                return True, levels.LEVEL_1
         # game.delta = 0.01
+        levels_list = [levels.LEVEL_1, levels.LEVEL_2, levels.LEVEL_3, 
+            levels.LEVEL_4, levels.LEVEL_5, levels.LEVEL_6]
+        if level == levels.CHOOSE_LVL:
+            for idx in range(1,7):
+                idx_str = str(idx)
+                if game.pressed(idx_str):
+                    pygame.mixer.Sound.play(action)
+                    # LVL = "LEVEL_" + num_str
+                    level = levels_list[idx - 1]
+                    return True, level   
+
         if game.pressed('escape'):
             return False
+        if game.pressed('q'):
+            return True, levels.START_UP
         if game.lives > 0 and game.bricks > 0:
             if game.pressed('space'):
                 game.objects.append(objects.Ball(game, game.grid[0] / 2, game.grid[1] / 2))
@@ -103,7 +123,11 @@ def run_game(game, level):
                 reset_screen = objects.Reset_Screen(game, 1.2, game.grid[1] / 2)
                 game.objects.append(reset_screen)
             if game.pressed('y'):
-                return True, levels.LEVEL
+                next_lvl = random.choice(levels_list)
+                while game.lvl == next_lvl:
+                    next_lvl = random.choice(levels_list)
+                return True, next_lvl
+
             if game.pressed('n'):
                 return True, levels.START_UP
         for obj in sorted(game.objects, key=lambda obj: obj.z):
