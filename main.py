@@ -14,7 +14,7 @@ def load_level(game, lvl_str):
     lvl = lvl_str[1:-1].split('\n')[::-1]
     grid = len(lvl[0]), len(lvl)
 
-    game.resize(grid, scale=40)
+    game.resize(grid, scale=50)
     game.grid = grid
     game.lvl = lvl
     game.objects = []

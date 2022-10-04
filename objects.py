@@ -293,16 +293,16 @@ class Wall(Object):
         if isinstance(obj, Ball):
             pygame.mixer.Sound.play(bounce3)
 
-    def draw(self):
-        super().draw()
-        if self.has_lft:
-            self.game.draw(self.x, self.y, .1, self.h, color=(0, 0, 1))
-        if self.has_rgt:
-            self.game.draw(self.x + self.w - .1, self.y, .1, self.h, color=(1, .5, 0)) # orange
-        if self.has_top:
-            self.game.draw(self.x, self.y + self.h - .1, self.w, .1, color=(0.5, 1, 0))
-        if self.has_btm:
-            self.game.draw(self.x, self.y, self.w, .1, color=(1, 1, 0.5))
+    # def draw(self):
+    #     super().draw()
+    #     if self.has_lft:
+    #         self.game.draw(self.x, self.y, .1, self.h, color=(0, 0, 1))
+    #     if self.has_rgt:
+    #         self.game.draw(self.x + self.w - .1, self.y, .1, self.h, color=(1, .5, 0)) # orange
+    #     if self.has_top:
+    #         self.game.draw(self.x, self.y + self.h - .1, self.w, .1, color=(0.5, 1, 0))
+    #     if self.has_btm:
+    #         self.game.draw(self.x, self.y, self.w, .1, color=(1, 1, 0.5))
 
         
 class Death(Object):
